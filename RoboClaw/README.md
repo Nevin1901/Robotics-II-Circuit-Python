@@ -6,7 +6,7 @@
     - Ignore step 2, we're not using encoders in this class
 3. 
 
-# RoboClaw not working? Steps to solve:
+# RoboClaw not working with CircuitPython? Steps to solve:
 
 1. Be sure RoboClaw has at least 9V battery source. 6V battery sources will not chooch 'er, you'll get a constant "logic battery low" error. 
 2. Be sure the RC is in the correct mode, via the onboard buttons. 
