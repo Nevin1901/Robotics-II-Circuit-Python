@@ -13,6 +13,7 @@ def sonar(pin):
     returns: Distance in cm between 0 & 568
 
     Note: If object is <5cm away, it will register either 0 or 568cm away. 
+    Note: Introduce a 0.1sec delay when taking sensor readings in CircuitPython, else the code will stop parsing. 
     
     '''
     
