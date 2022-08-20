@@ -22,7 +22,6 @@ Max: 1920us
 
 import time
 import board
-from code import sonar
 import digitalio
 import pwmio
 import neopixel
@@ -98,40 +97,42 @@ def stop_motors():
 
     rc_m1.duty_cycle = ms_duty_cycle_convert(stop)
     rc_m2.duty_cycle = ms_duty_cycle_convert(stop)
+    neopixel_ring_debug(RED)
 
-def drive_motors(speed):
+def drive_motors_backward(speed):
     '''Send motorbit forward at a proportional speed
-    speed = a value between -100 and 100. 0 is stop'''
-    #ms commands for motor control
-    min: 1.12
-    max: 1.92
+    speed = a value between 1 and 100. 0 is stop'''
+    m1_start = 1.595
+    m2_start = 1.3
     #convert 1-100 scale into forward ms scale, with 1120ms as max backwards, and 
-    conv_speed = map_range(speed, -100, 100, min, max)
+    m1_speed = map_range(speed, 1, 100, m1_start, 1.92)
+    m2_speed = map_range(speed, 1, 100, m2_start, 1.12)
 
-    if speed != 0:
-        rc_m1.duty_cycle = ms_duty_cycle_convert(conv_speed)
-        #motors are orientated opposite, one needs to run backwards
-        rc_m2.duty_cycle = ms_duty_cycle_convert(conv_speed * -1)
-        if speed >= 1:
-            neopixel_ring_debug(BLUE)
-        else: 
-            neopixel_ring_debug(GREEN)
-    else: 
-        stop_motors()
+    rc_m1.duty_cycle = ms_duty_cycle_convert(m1_speed)
+    rc_m2.duty_cycle = ms_duty_cycle_convert(m2_speed)
+    neopixel_ring_debug(BLUE)
 
+def drive_motors_forward(speed):
+    '''Send motorbit forward at a proportional speed
+    speed = a value between 1 and 100. 0 is stop'''
+    m1_backward_start = 1.3
+    m2_forward_start = 1.65
 
+    m1_speed = map_range(speed, 1, 100, m1_backward_start, 1.12)
+    m2_speed = map_range(speed, 1, 100, m2_forward_start, 1.92)
+
+    rc_m1.duty_cycle = ms_duty_cycle_convert(m1_speed)
+    rc_m2.duty_cycle = ms_duty_cycle_convert(m2_forward_start)
+    neopixel_ring_debug(GREEN)
+
+print("start")
 while True:
     #basic follower robot in a straight line. 
     distance = sonar_bit(sonarbit)
+    time.sleep(.1)
 
-    if distance > 150:
-        #we are very far away, move at max speed
-        drive_motors(100)
-    elif distance <= 150 and distance > 60:
-        prop_speed = map_range(distance,60,150,10,100)
-        drive_motors(prop_speed)
-    elif distance < 10:
-        #we are too close, back up
-        drive_motors(-50)
-    elif distance > 40 and distance < 60:
-        stop_motors()
+    drive_motors_backward(25)
+    time.sleep(2)
+    drive_motors_forward(25)
+    time.sleep(2)
+    print("done")
