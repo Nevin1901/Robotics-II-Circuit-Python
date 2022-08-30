@@ -7,21 +7,11 @@ import time
 import board
 import digitalio
 from audiocore import WaveFile
-
-try:
-    from audioio import AudioOut
-except ImportError:
-    try:
-        from audiopwmio import PWMAudioOut as AudioOut
-    except ImportError:
-        pass  # not always supported by every board!
-
-button = digitalio.DigitalInOut(board.A1)
-button.switch_to_input(pull=digitalio.Pull.UP)
+from audioio import AudioOut
 
 wave_file = open("StreetChicken.wav", "rb")
 wave = WaveFile(wave_file)
-audio = AudioOut(board.A0)
+audio = AudioOut(board.A1)
 
 while True:
     audio.play(wave)
