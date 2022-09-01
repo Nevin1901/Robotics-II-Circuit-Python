@@ -12,8 +12,7 @@ def sonar(pin):
     pin = the pin with the ping sensor
     returns: Distance in cm between 0 & 568
 
-    Note: If object is <5cm away, it will register either 0 or 568cm away. 
-    Note: Introduce a 0.1sec delay when taking sensor readings in CircuitPython, else the code will stop parsing. 
+    Note: Introduce a 0.05sec delay when taking sensor readings in CircuitPython, else the code will stop parsing. 
     
     '''
     
@@ -44,11 +43,13 @@ def sonar(pin):
         print("object too close")
         distance = 0
     
+    #you may take this out if necesssary and you are doing other time based functions on your code. If you are not, leave this in otherwise you will send out signals too quickly for what the ping sensor can send/recieve from. 
+    time.sleep(0.05)
     return distance
 
 
 pin = digitalio.DigitalInOut(board.D2)
 while True:
     print("the object is " + str(sonar(pin)) + " cm away")
-    time.sleep(0.5)
+    time.sleep(0.05)
 
