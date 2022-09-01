@@ -62,7 +62,7 @@ We calculate our start time for when we begin listening, and our end time for wh
         end_time = time.monotonic_ns()
 ```
 
-Lastly, we check our distance to the object based on how long it took for the sent the sound signals to return and be heard. First, we try to calculate the distance as time/2 * the speed of sound (34,000 cm/s). We must divide time/2 as we are actually calculating the time that the signal takes to be sent out, then returned, and we only need to calculate the distance of *half* of this measurement, as otherwise we would be double measuring. 
+Lastly, we check our distance to the object based on how long it took for the sent the sound signals to return and be heard. First, we try to calculate the distance as time/2 * the speed of sound (34,000 cm/s). We must divide time/2 as we are actually calculating the time that the signal takes to be sent out, then returned, and we only need to calculate the distance of *half* of this measurement, as otherwise we would be double measuring. We use floor here to return an integer value, rather than float, as our sensor realistically is accurate to +/- 1cm, and is not accurate to a floating decimal point, so returning a float is pointless. 
 
 We use a try statement here, as sometimes an object can be under 5cm away from the sensor. When this happens, the signal doesn't have enough time to be sent and recieved, causing our end time to be < than start time. When this is true, start time is never assigned above, and we get an error that "start time has not been defined", and this breaks out program. To solve this, we use an except statement, meaning that if our try doesn't work, or returns an error, our program will print "object too close" and return a distance of 0. 
 
