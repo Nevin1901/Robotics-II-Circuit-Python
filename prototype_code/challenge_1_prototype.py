@@ -1,46 +1,33 @@
 #First Challenge Example Board
 
-# Red & Green LED's for what function is running
-# button swaps between modes
-# 1. Ping & colour wheel change combo
-# 2. Potentiometer & rainbow chase control
-# OLED Screen describing score
+# button swaps between modes - Color chase or straight fill colour
+# 1. colour chase, colour based on distance from sensor
+# 2. fill, num_pixels based on distance from sensor
+# OLED Screen describes score & distance in each case
 
 import board
 from digitalio import DigitalInOut, Direction, Pull
 import time
 from math import floor
-from rainbowio import colorwheel
 import neopixel
-from analogio import AnalogIn
 from adafruit_simplemath import map_range
 import terminalio
 import displayio
 from adafruit_display_text import label
 import adafruit_displayio_ssd1306
 
-#init button D12 as pull up
+#init button D12 as pull down
+#it's pull down due to GND on constant loop, and stops signal noise present
 button = DigitalInOut(board.D12)
 button.direction = Direction.INPUT
 button.pull = Pull.DOWN
-
-#init red LED D11
-r_led = DigitalInOut(board.D11)
-r_led.direction = Direction.OUTPUT
-
-#init green LED D10
-g_led = DigitalInOut(board.D10)
-g_led.direction = Direction.OUTPUT
 
 #init ping sensor D7
 ping_sensor = DigitalInOut(board.D7)
 
 #init neopixel ring D8
 num_pixels = 16
-pixels = neopixel.NeoPixel(board.D8, 16, brightness=0.1)
-
-#init Potentiometer A1
-pot = AnalogIn(board.A1)
+pixels = neopixel.NeoPixel(board.D8, num_pixels, brightness=0.1)
 
 #reset displays, needed as if the m4 reboots, we must release the screen before init again.
 displayio.release_displays()
@@ -50,20 +37,6 @@ oled_reset = board.D9
 i2c = board.I2C()
 #perhaps capitalD for address?)
 display_bus = displayio.I2CDisplay(i2c, device_address=0x3d, reset=oled_reset)
-
-#declare variables
-button_state = False
-ping_sensor_state = True
-distance = 0
-wait = 0.009
-
-RED = (255, 0, 0)
-YELLOW = (255, 150, 0)
-GREEN = (0, 255, 0)
-CYAN = (0, 255, 255)
-BLUE = (0, 0, 255)
-PURPLE = (180, 0, 255)
-OFF = (0,0,0)
 
 def sonar(pin):
     ''' Get a ping reading from 5cm>568cm from the Elecfreaks Pin Sensor. Trigger & Echo are on the 'same pin'.
@@ -109,15 +82,7 @@ def color_chase(color, wait):
         pixels[i] = color
         time.sleep(wait)
         pixels.show()
-
-def rainbow_cycle(wait):
-    for j in range(255):
-        for i in range(num_pixels):
-            rc_index = (i * 256 // num_pixels) + j
-            pixels[i] = colorwheel(rc_index & 255)
         pixels.show()
-        time.sleep(wait)
-
 
 #OLED Screen setup
 #display parameters
@@ -150,7 +115,7 @@ inner_sprite = displayio.TileGrid(
 splash.append(inner_sprite)
 
 def display_word(word):
-    # Set text, font, and color
+    # Set text, font, and color on OLED screen
     text = str(word)
     font = terminalio.FONT
     color = 0xFFFFFF
@@ -160,44 +125,64 @@ def display_word(word):
     # Show it
     display.show(text_area)
 
+#init declare variables
+button_state = False
+distance = 0
+wait = 0.02
+
+#main colours for use with neopixel
+RED = (255, 0, 0)
+YELLOW = (255, 150, 0)
+GREEN = (0, 255, 0)
+CYAN = (0, 255, 255)
+BLUE = (0, 0, 255)
+PURPLE = (180, 0, 255)
+OFF = (0,0,0)
+
+def colour_chase_state():
+    #show what state we're in
+    display_word("Colour Chase\nDistance: " + str(distance))
+
+    if distance < 30:
+        color_choice = RED
+    elif distance <= 70 and distance >= 30:
+        color_choice = YELLOW
+    else:
+        color_choice = GREEN
+    color_chase(color_choice, wait)
+    pixels.fill(OFF)
+    pixels.show()
+    pixels.show()
+
+def fill_state():
+    #show what state we're in
+    display_word("Colour Fill\nDistance: " + str(distance))
+
+    #plot to only several pixels
+    pixels_to_show = int(map_range(distance,0,100,0,15))
+
+    #turn off pixels above range to show
+    for i in range(num_pixels-1, pixels_to_show, -1):
+        pixels[i] = OFF
+        pixels.show()
+
+    #show pixels in range
+    for i in range(pixels_to_show):
+        pixels[i] = CYAN
+        pixels.show()
+
+
 while True:
+    #is button pushed or not
     button_state = button.value
 
-    if not button_state:
-        #toggle main bool
-        ping_sensor_state = False
+    #get ping value
+    distance = sonar(ping_sensor)
+
+    if button_state:
+        colour_chase_state()
     else:
-        ping_sensor_state = True
-
-    if ping_sensor_state:
-        #ping chooses which colour displays in colour chase
-        display_word("Ping State\nDistance: " + str(distance))
-        r_led.value = True
-        g_led.value = False
-
-        distance = sonar(ping_sensor)
-        #print(distance)
-        if distance > 50:
-            color_choice = CYAN
-            color_chase(color_choice, wait)
-            color_choice = PURPLE
-            color_chase(color_choice, wait)
-        else:
-            color_choice = BLUE
-            color_chase(color_choice, wait)
-            color_choice = RED
-            color_chase(color_choice, wait)
-
-
-    else:
-        #pot changes speed of rainbow show
-        r_led.value = False
-        g_led.value = True
-        voltage = pot.value
-        voltage = (map_range(voltage, 0,55353,0.01,0.1)/100)
-        #voltage = int(voltage)
-        display_word("Pot. State\nWait: " + str(voltage))
-        rainbow_cycle(voltage)
+        fill_state()
 
 
 
