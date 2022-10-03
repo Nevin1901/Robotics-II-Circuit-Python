@@ -23,6 +23,9 @@ min_speed = 1 #full forward
 max_speed = 2 #full backward
 stop = 1.5 #needs to be calibrated by motor.
 
+#4 second pause once the m4 is initialized. 
+time.sleep(4)
+
 #Main motor move forward, stop, backwards, stop
 motor1.duty_cycle = servo_duty_cycle(min_speed)
 motor2.duty_cycle = servo_duty_cycle(min_speed)
